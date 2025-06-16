@@ -16,6 +16,8 @@ local config = {
   -- Whether to count newline characters or not. Due to neovim native counting
   -- mechanisms, probably does not work correctly in blockwise selection.
   count_newlines = false,
+  -- additional spaces to put before the virtual text.
+  spacing = 0,
   -- Custom format function for the count, receives the number of lines, words
   -- and chars as 3 integers params, and expects a string (or nil) in return.
   format = function(lines, words, chars)
@@ -67,7 +69,7 @@ local function count(lines, count_bytes, count_newlines)
       total_chars = total_chars + total_lines
     end
   end
-  return config.format(total_lines, vim.fn.wordcount().visual_words, total_chars)
+  return total_lines, vim.fn.wordcount().visual_words, total_chars
 end
 
 local function make_virtual_text(content)
@@ -95,13 +97,13 @@ local function setup_autocmds()
       if not in_visual then return end
       local region = get_visual_region()
       if not region then return end
-      local virtext = count(
+      local virtext = config.format(count(
         region,
         config.count_bytes,
         config.count_newlines
-      )
+      ))
       if not virtext then return end
-      make_virtual_text(virtext)
+      make_virtual_text(string.rep(" ", config.spacing) .. virtext)
     end,
     group = autogrp,
   })
