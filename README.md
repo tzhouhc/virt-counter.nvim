@@ -10,3 +10,27 @@ Shows line/char count for current visual selection as virtual text.
 -- lazy.nvim
 "tzhouhc/virt-counter.nvim"
 ```
+
+## Options
+
+```lua
+-- Default configuration
+local config = {
+  -- What highlight group to use for the virtual text.
+  highlight_group = "Comment",
+  -- Location of the virtual text.
+  pos = "eol",
+  -- Minimal amount of time to pass in milli-secs before rerunning.
+  debounce_ms = 50,
+  -- Whether to count using bytes or actual characters (e.g. for CJK).
+  count_bytes = false,
+  -- Whether to count newline characters or not. Due to neovim native counting
+  -- mechanisms, probably does not work correctly in blockwise selection.
+  count_newlines = false,
+  -- Custom format function for the count, receives the number of lines and chars
+  -- as two integers params, and expects a string (or nil) in return.
+  format = function(lines, chars)
+    return string.format("%d lines, %d characters", lines, chars)
+  end,
+}
+```
