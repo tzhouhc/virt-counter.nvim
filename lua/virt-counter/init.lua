@@ -18,6 +18,14 @@ local config = {
   count_newlines = false,
   -- additional spaces to put before the virtual text.
   spacing = 0,
+  -- Configuration for creation a 'pill/button' like virtual text.
+  --   left: the left edge string for the button
+  --   right: the right edge string for the button
+  --   edge_highlight_group: the highlight group for the edges of the button.
+  --       if not provided, creates a simple reversed hl group using the main
+  --       highlight_group. (For best effects, this should be one with colored
+  --       bg and dark fg.)
+  button = nil,
   -- Custom format function for the count, receives the number of lines, words
   -- and chars as 3 integers params, and expects a string (or nil) in return.
   format = function(lines, words, chars)
@@ -72,9 +80,24 @@ local function count(lines, count_bytes, count_newlines)
   return total_lines, vim.fn.wordcount().visual_words, total_chars
 end
 
-local function make_virtual_text(content)
+local function make_virtual_text(spacing, content)
   vim.api.nvim_buf_set_extmark(0, ns_id, vim.fn.line('.') - 1, 0, {
-    virt_text = { { content, config.highlight_group } },
+    virt_text = {
+      { string.rep(" ", spacing), "Normal" },
+      { content,                  config.highlight_group }
+    },
+    virt_text_pos = config.pos
+  })
+end
+
+local function make_button_virtual_text(spacing, content, button)
+  vim.api.nvim_buf_set_extmark(0, ns_id, vim.fn.line('.') - 1, 0, {
+    virt_text = {
+      { string.rep(" ", spacing), "Normal" },
+      { button.left,              button.edge_highlight_group },
+      { content,                  config.highlight_group },
+      { button.right,             button.edge_highlight_group },
+    },
     virt_text_pos = config.pos
   })
 end
@@ -83,7 +106,22 @@ local function clear_virtual_text()
   vim.api.nvim_buf_clear_namespace(0, ns_id, 0, -1)
 end
 
+local function create_inverse_highlight(orig_grp)
+  local new_grp = orig_grp .. "Reversed"
+  -- Get original highlight
+  local orig_hl = vim.api.nvim_get_hl(0, { name = orig_grp })
+  if vim.tbl_isempty(orig_hl) then
+    return new_grp
+  end
+  vim.api.nvim_set_hl(0, new_grp, { fg = orig_hl.bg, bg = orig_hl.fg })
+  return new_grp
+end
+
 local function setup_autocmds()
+  if config.button and not config.button.edge_highlight_group then
+    config.button.edge_highlight_group = create_inverse_highlight(config.highlight_group)
+  end
+
   local autogrp = vim.api.nvim_create_augroup("VisualCounterVirtualText", { clear = true })
 
   vim.api.nvim_create_autocmd({ "CursorMoved" }, {
@@ -103,7 +141,12 @@ local function setup_autocmds()
         config.count_newlines
       ))
       if not virtext then return end
-      make_virtual_text(string.rep(" ", config.spacing) .. virtext)
+      local button = config.button
+      if button and button.left and button.right then
+        make_button_virtual_text(config.spacing, virtext, button)
+      else
+        make_virtual_text(config.spacing, virtext)
+      end
     end,
     group = autogrp,
   })

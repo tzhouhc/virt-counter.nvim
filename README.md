@@ -15,7 +15,7 @@ Shows line/char count for current visual selection as virtual text.
 
 ```lua
 -- Default configuration
-local config = {
+opts = {
   -- What highlight group to use for the virtual text.
   highlight_group = "Comment",
   -- Location of the virtual text.
@@ -35,4 +35,28 @@ local config = {
     return string.format("%d lines, %d characters", lines, chars)
   end,
 }
+```
+
+## Example
+
+Sample setup with customized formatting and "pill"-like visuals using powerline
+symbols:
+
+```lua
+return {
+  "tzhouhc/virt-counter.nvim",
+  cond = not not vim.g.visual_wordcount,
+  opts = {
+    count_newlines = true,
+    highlight_group = "CurSearch",
+    spacing = 4,
+    button = {
+      left = "\u{E0B6}",
+      right = "\u{E0B4}",
+    },
+    format = function(l, w, c)
+      return "󰈚 " .. l .. " 󰬞 " .. w .. " 󰬊 " .. c
+    end,
+  }
+},
 ```
