@@ -27,6 +27,8 @@ local config = {
   -- Whether to count newline characters or not. Due to neovim native counting
   -- mechanisms, probably does not work correctly in blockwise selection.
   count_newlines = false,
+  -- additional spaces to put before the virtual text.
+  spacing = 0,
   -- Custom format function for the count, receives the number of lines and chars
   -- as two integers params, and expects a string (or nil) in return.
   format = function(lines, chars)
