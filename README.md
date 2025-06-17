@@ -42,7 +42,7 @@ opts = {
 Sample setup with customized formatting and "pill"-like visuals using powerline
 symbols:
 
-![Sample](https://github.com/tzhouhc/virt-counter/raw/main/images/demo_1.png)
+![Sample](https://github.com/tzhouhc/virt-counter.nvim/raw/main/images/demo_1.png)
 
 ```lua
 return {
