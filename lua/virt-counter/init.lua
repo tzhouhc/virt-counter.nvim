@@ -94,9 +94,9 @@ local function make_button_virtual_text(spacing, content, button)
   vim.api.nvim_buf_set_extmark(0, ns_id, vim.fn.line('.') - 1, 0, {
     virt_text = {
       { string.rep(" ", spacing), "Normal" },
-      { button.left,              button.edge_highlight_group },
+      { button.left or "",              button.edge_highlight_group },
       { content,                  config.highlight_group },
-      { button.right,             button.edge_highlight_group },
+      { button.right or "",             button.edge_highlight_group },
     },
     virt_text_pos = config.pos
   })
@@ -142,7 +142,7 @@ local function setup_autocmds()
       ))
       if not virtext then return end
       local button = config.button
-      if button and button.left and button.right then
+      if button and (button.left or button.right) then
         make_button_virtual_text(config.spacing, virtext, button)
       else
         make_virtual_text(config.spacing, virtext)
