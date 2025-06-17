@@ -7,7 +7,7 @@ local last_update = 0
 local config = {
   -- What highlight group to use for the virtual text.
   highlight_group = "Comment",
-  -- Location of the virtual text.
+  -- Location of the virtual text. Can take legal values of `virt_text_pos`.
   pos = "eol",
   -- Minimal amount of time to pass in milli-secs before rerunning.
   debounce_ms = 50,
@@ -94,9 +94,9 @@ local function make_button_virtual_text(spacing, content, button)
   vim.api.nvim_buf_set_extmark(0, ns_id, vim.fn.line('.') - 1, 0, {
     virt_text = {
       { string.rep(" ", spacing), "Normal" },
-      { button.left or "",              button.edge_highlight_group },
+      { button.left or "",        button.edge_highlight_group },
       { content,                  config.highlight_group },
-      { button.right or "",             button.edge_highlight_group },
+      { button.right or "",       button.edge_highlight_group },
     },
     virt_text_pos = config.pos
   })
@@ -117,11 +117,36 @@ local function create_inverse_highlight(orig_grp)
   return new_grp
 end
 
-local function setup_autocmds()
-  if config.button and not config.button.edge_highlight_group then
+function M.refresh()
+  clear_virtual_text()
+  local in_visual = vim.fn.mode():match('[vV\22]')
+  if not in_visual then return end
+  local region = get_visual_region()
+  if not region then return end
+  local virtext = config.format(count(
+    region,
+    config.count_bytes,
+    config.count_newlines
+  ))
+  if not virtext then return end
+  local button = config.button
+  if button and (button.left or button.right) then
+    make_button_virtual_text(config.spacing, virtext, button)
+  else
+    make_virtual_text(config.spacing, virtext)
+  end
+end
+
+local function setup_edge_highlight_group()
+  if not config.button then return end
+  if next(config.button) == nil then return end
+  if not config.button.edge_highlight_group then
     config.button.edge_highlight_group = create_inverse_highlight(config.highlight_group)
   end
+end
 
+local function setup_autocmds()
+  setup_edge_highlight_group()
   local autogrp = vim.api.nvim_create_augroup("VisualCounterVirtualText", { clear = true })
 
   -- activate on both mode change and cursor move so that
@@ -133,23 +158,7 @@ local function setup_autocmds()
       local now = vim.loop.hrtime() / 1000000 -- Convert to ms
       if now - last_update < config.debounce_ms then return end
       last_update = now
-      clear_virtual_text()
-      local in_visual = vim.fn.mode():match('[vV\22]')
-      if not in_visual then return end
-      local region = get_visual_region()
-      if not region then return end
-      local virtext = config.format(count(
-        region,
-        config.count_bytes,
-        config.count_newlines
-      ))
-      if not virtext then return end
-      local button = config.button
-      if button and (button.left or button.right) then
-        make_button_virtual_text(config.spacing, virtext, button)
-      else
-        make_virtual_text(config.spacing, virtext)
-      end
+      M.refresh()
     end,
     group = autogrp,
   })

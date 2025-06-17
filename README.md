@@ -24,7 +24,7 @@ Shows line/word/char count for current visual selection as virtual text.
 opts = {
   -- What highlight group to use for the virtual text.
   highlight_group = "Comment",
-  -- Location of the virtual text.
+  -- Location of the virtual text. Can take legal values of `virt_text_pos`.
   pos = "eol",
   -- Minimal amount of time to pass in milli-secs before rerunning.
   debounce_ms = 50,
@@ -35,10 +35,18 @@ opts = {
   count_newlines = false,
   -- additional spaces to put before the virtual text.
   spacing = 0,
-  -- Custom format function for the count, receives the number of lines and chars
-  -- as two integers params, and expects a string (or nil) in return.
-  format = function(lines, chars)
-    return string.format("%d lines, %d characters", lines, chars)
+  -- Configuration for creation a 'pill/button' like virtual text.
+  --   left: the left edge string for the button
+  --   right: the right edge string for the button
+  --   edge_highlight_group: the highlight group for the edges of the button.
+  --       if not provided, creates a simple reversed hl group using the main
+  --       highlight_group. (For best effects, this should be one with colored
+  --       bg and dark fg.)
+  button = nil,
+  -- Custom format function for the count, receives the number of lines, words
+  -- and chars as 3 integers params, and expects a string (or nil) in return.
+  format = function(lines, words, chars)
+    return string.format("%d lines, %d words, %d chars", lines, words, chars)
   end,
 }
 ```
@@ -67,3 +75,9 @@ return {
   }
 },
 ```
+
+## API
+
+In addition to the standard `setup` method, you can also directly invoke the
+lua API with `require("virt-counter").refresh()`, which will clear the virtual
+text if outside of visual mode, or update it without requiring the events.
