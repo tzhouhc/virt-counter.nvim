@@ -42,10 +42,11 @@ opts = {
 Sample setup with customized formatting and "pill"-like visuals using powerline
 symbols:
 
+![Sample](https://github.com/tzhouhc/virt-counter/raw/main/images/demo_1.png)
+
 ```lua
 return {
   "tzhouhc/virt-counter.nvim",
-  cond = not not vim.g.visual_wordcount,
   opts = {
     count_newlines = true,
     highlight_group = "CurSearch",
