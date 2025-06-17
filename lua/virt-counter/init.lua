@@ -124,7 +124,10 @@ local function setup_autocmds()
 
   local autogrp = vim.api.nvim_create_augroup("VisualCounterVirtualText", { clear = true })
 
-  vim.api.nvim_create_autocmd({ "CursorMoved" }, {
+  -- activate on both mode change and cursor move so that
+  --   - entering visual mode immediately creates the virtext
+  --   - leaving immediately clears it
+  vim.api.nvim_create_autocmd({ "CursorMoved", "ModeChanged" }, {
     pattern = { "*" },
     callback = function()
       local now = vim.loop.hrtime() / 1000000 -- Convert to ms
@@ -147,14 +150,6 @@ local function setup_autocmds()
       else
         make_virtual_text(config.spacing, virtext)
       end
-    end,
-    group = autogrp,
-  })
-
-  vim.api.nvim_create_autocmd({ "ModeChanged" }, {
-    pattern = { "*.*" },
-    callback = function()
-      clear_virtual_text()
     end,
     group = autogrp,
   })

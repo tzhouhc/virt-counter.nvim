@@ -2,7 +2,13 @@
 
 ![Lua](https://img.shields.io/badge/Made%20with%20Lua-blueviolet.svg?style=for-the-badge&logo=lua)
 
-Shows line/char count for current visual selection as virtual text.
+Shows line/word/char count for current visual selection as virtual text.
+
+> [!NOTE]
+> Known caveat: does not immediately update selection count when selection
+> updates but the cursor does not move -- Neovim does not provide an event
+> for [visual change](https://github.com/neovim/neovim/issues/19708).
+> I suppose you can just wobble your cursor a bit...?
 
 ## Basic setup
 
