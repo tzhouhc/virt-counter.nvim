@@ -16,6 +16,8 @@ local config = {
   -- Whether to count newline characters or not. Due to neovim native counting
   -- mechanisms, probably does not work correctly in blockwise selection.
   count_newlines = false,
+  -- Whether to count white space characters or not.
+  count_whitespace = true,
   -- additional spaces to put before the virtual text.
   spacing = 0,
   -- Configuration for creation a 'pill/button' like virtual text.
@@ -54,13 +56,16 @@ local function is_cursor_at_eol()
   return cursor_col == line_length
 end
 
-local function count(lines, count_bytes, count_newlines)
+local function count(lines, count_bytes, count_newlines, count_whitespace)
   if not lines or #lines == 0 then
     return ""
   end
   local total_lines = #lines
   local total_chars = 0
   for _, line in ipairs(lines) do
+    if not count_whitespace then
+      line = string.gsub(line, "%s", "")
+    end
     if count_bytes then
       total_chars = total_chars + string.len(line)
     else
@@ -126,7 +131,8 @@ function M.refresh()
   local virtext = config.format(count(
     region,
     config.count_bytes,
-    config.count_newlines
+    config.count_newlines,
+    config.count_whitespace
   ))
   if not virtext then return end
   local button = config.button
@@ -171,6 +177,9 @@ function M.setup(opts)
     opts.format = nil
   end
   config = vim.tbl_deep_extend("force", config, opts)
+
+  -- count_whitespace overrides count_newlines: newlines are whitespaces
+  if not config.count_whitespace then config.count_newlines = false end
   setup_autocmds()
 end
 
