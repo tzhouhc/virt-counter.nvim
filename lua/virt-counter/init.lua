@@ -2,6 +2,7 @@
 local M = {}
 
 local last_update = 0
+M.enabled = true
 
 -- Default configuration
 local config = {
@@ -18,6 +19,10 @@ local config = {
   count_newlines = false,
   -- Whether to count white space characters or not.
   count_whitespace = true,
+  -- Whether to create user commands to toggle the above counting settings.
+  create_toggle_cmds = true,
+  -- Whether toggling produces a notification
+  silent_toggle = false,
   -- additional spaces to put before the virtual text.
   spacing = 0,
   -- Configuration for creation a 'pill/button' like virtual text.
@@ -152,7 +157,6 @@ local function setup_edge_highlight_group()
 end
 
 local function setup_autocmds()
-  setup_edge_highlight_group()
   local autogrp = vim.api.nvim_create_augroup("VisualCounterVirtualText", { clear = true })
 
   -- activate on both mode change and cursor move so that
@@ -170,6 +174,81 @@ local function setup_autocmds()
   })
 end
 
+local function update_config(opts)
+  config = vim.tbl_deep_extend("force", config, opts)
+end
+
+function M.toggle_count_newlines(silent_toggle)
+  update_config({ count_newlines = not config.count_newlines })
+  if config.count_newlines and not config.count_whitespace then M.toggle_count_whitespace(silent_toggle) end
+  if not silent_toggle then
+    vim.notify("Set virt-counter count newlines to `" .. tostring(config.count_newlines) .. "`.")
+  end
+end
+
+function M.toggle_count_whitespace(silent_toggle)
+  update_config({ count_whitespace = not config.count_whitespace })
+  if not config.count_whitespace and config.count_newlines then M.toggle_count_newlines(silent_toggle) end
+  if not silent_toggle then
+    vim.notify("Set virt-counter count whitespace to `" .. tostring(config.count_whitespace) .. "`.")
+  end
+end
+
+function M.toggle_count_bytes(silent_toggle)
+  update_config({ count_bytes = not config.count_bytes })
+  if not silent_toggle then
+    vim.notify("Set virt-counter count bytes to `" .. tostring(config.count_bytes) .. "`.")
+  end
+end
+
+local function setup_core_usercmds()
+  vim.api.nvim_create_user_command(
+    "VirtCounterEnable",
+    function()
+      M.enable()
+    end,
+    {}
+  )
+  vim.api.nvim_create_user_command(
+    "VirtCounterDisable",
+    function()
+      M.disable()
+    end,
+    {}
+  )
+  vim.api.nvim_create_user_command(
+    "VirtCounterToggle",
+    function()
+      M.toggle(config.silent_toggle)
+    end,
+    {}
+  )
+end
+
+local function setup_usercmds()
+  vim.api.nvim_create_user_command(
+    "VirtCounterToggleCountNewlines",
+    function()
+      M.toggle_count_newlines(config.silent_toggle)
+    end,
+    {}
+  )
+  vim.api.nvim_create_user_command(
+    "VirtCounterToggleCountWhitespaces",
+    function()
+      M.toggle_count_whitespace(config.silent_toggle)
+    end,
+    {}
+  )
+  vim.api.nvim_create_user_command(
+    "VirtCounterToggleCountBytes",
+    function()
+      M.toggle_count_bytes(config.silent_toggle)
+    end,
+    {}
+  )
+end
+
 function M.setup(opts)
   opts = opts or {}
   if opts.format and type(opts.format) ~= "function" then
@@ -180,10 +259,35 @@ function M.setup(opts)
 
   -- count_whitespace overrides count_newlines: newlines are whitespaces
   if not config.count_whitespace then config.count_newlines = false end
+  setup_edge_highlight_group()
+  setup_autocmds()
+  setup_core_usercmds()
+  if config.create_toggle_cmds then
+    setup_usercmds()
+  end
+end
+
+function M.toggle(silent_toggle)
+  if M.enabled then
+    M.disable()
+    if not silent_toggle then
+      vim.notify("Disabled virt counter.")
+    end
+  else
+    M.enable()
+    if not silent_toggle then
+      vim.notify("Enabled virt counter.")
+    end
+  end
+end
+
+function M.enable()
+  M.enabled = true
   setup_autocmds()
 end
 
 function M.disable()
+  M.enabled = false
   clear_virtual_text()
   vim.api.nvim_del_augroup_by_name("VisualCounterVirtualText")
 end

@@ -21,7 +21,7 @@ Shows line/word/char count for current visual selection as virtual text.
 
 ```lua
 -- Default configuration
-opts = {
+opts ={
   -- What highlight group to use for the virtual text.
   highlight_group = "Comment",
   -- Location of the virtual text. Can take legal values of `virt_text_pos`.
@@ -33,6 +33,12 @@ opts = {
   -- Whether to count newline characters or not. Due to neovim native counting
   -- mechanisms, probably does not work correctly in blockwise selection.
   count_newlines = false,
+  -- Whether to count white space characters or not.
+  count_whitespace = true,
+  -- Whether to create user commands to toggle the above counting settings.
+  create_toggle_cmds = true,
+  -- Whether toggling produces a notification
+  silent_toggle = false,
   -- additional spaces to put before the virtual text.
   spacing = 0,
   -- Configuration for creation a 'pill/button' like virtual text.
@@ -50,6 +56,12 @@ opts = {
   end,
 }
 ```
+
+> [!NOTE]
+> If `count_newlines` then `count_whitespace` is automatically true; if
+> `count_whitespace` is false then `count_newlines` is automatically false.
+>
+> However you can have `count_whitespace` but `not count_newlines`.
 
 ## Example
 
@@ -81,3 +93,19 @@ return {
 In addition to the standard `setup` method, you can also directly invoke the
 lua API with `require("virt-counter").refresh()`, which will clear the virtual
 text if outside of visual mode, or update it without requiring the events.
+
+```lua
+
+local vc = require("virt-counter")
+
+-- API to toggle specific options on the fly; takes one parameter for whether
+-- to send a notification for current status.
+vc.toggle_count_newlines(true)
+vc.toggle_count_bytes(true)
+vc.toggle_count_whitespace(true)
+
+-- overall plugin status control
+vc.enable()
+vc.disable()
+vc.toggle()
+```
